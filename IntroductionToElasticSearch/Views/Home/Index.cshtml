@@ -1,0 +1,106 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+@using IntroductionToElasticSearch.BusinessLogic.ExtensionMethods
+@model IntroductionToElasticSearch.ViewModels.MovieSearchViewModel
+
+<div class="jumbotron">
+    <h1>Introduction to Elasticsearch</h1>
+    @using (Html.BeginForm())
+    {
+        <label>Criteria</label> @Html.TextBoxFor(x => x.SearchCriteria, new { @name = "search_criteria",
+       @id = "search_criteria",
+       @class = "search_box",
+            @placeholder = "Enter Search Criteria Here" })
+        <br />
+        <label>Only Movies?</label> @Html.CheckBoxFor(x => x.OnlyMovies)
+        <br />
+        <label>Only Original Title?</label> @Html.CheckBoxFor(x => x.OnlyOriginalTitle)
+        <br />
+        <label>Specific Id (Overrides all filters)</label> @Html.TextBoxFor(x => x.DocumentId,
+                                                               new { @name = "search_criteria",
+                                                                   @id = "search_criteria",
+                                                                   @class = "search_box",
+                                                                   @placeholder = "Enter DocumentId" })
+        <br />
+
+        <input type="submit" value="Search" class="search_button" />
+        <br />
+    }
+</div>
+<div class="jumbotron">
+    <h1>
+        Json and Query Results Info
+    </h1>
+    <h3>
+        @Model.QueryJson
+    </h3>
+    <h3>
+        @if ((Model.QueryResults == null))
+        {
+            <label>No results found</label>
+        }
+        else
+        {
+          <label>Total Records Found</label> @Model.QueryResults.Total
+        }
+        
+    </h3>
+
+</div>
+    <div class="jumbotron">
+        <h1>Results</h1>
+        <table border="2">
+            <thead>
+                <tr>
+                    <td>
+                        Id
+                    </td>
+                    <td>
+                        Original Title
+                    </td>
+                    <td>
+                        Primary Title
+                    </td>
+                    <td>
+                        Title Type
+                    </td>
+                    <td>
+                        Start Year
+                    </td>
+                    <td>
+                        Runtime
+                    </td>
+                    <td>
+                        Genres
+                    </td>
+                </tr>
+            </thead>
+            @foreach (var movie in Model.FoundMovies)
+            {
+            <tr>
+                <td>
+                    @movie.Id
+                </td>
+                <td>
+                    @movie.OriginalTitle
+                </td>
+                <td>
+                    @movie.PrimaryTitle
+                </td>
+                <td>
+                    @movie.TitleType
+                </td>
+                <td>
+                    @movie.StartYear
+                </td>
+                <td>
+                    @movie.RuntimeMinutes
+                </td>
+                <td>
+                    @movie.Genres.ArrayToString();
+                </td>
+            </tr>
+            }
+        </table>
+    </div>
