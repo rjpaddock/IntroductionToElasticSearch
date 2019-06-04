@@ -31,10 +31,7 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
         public static void LoadCollectionInfoIndex<T>(List<T> dataToProcess, ElasticClient client, string indexName) where T : class
         {
-
-
-            var start = new Stopwatch();
-            start.Start();
+            
             var waitHandle = new CountdownEvent(1);
             var bulkAll = client.BulkAll(dataToProcess, b => b
                 .Index(indexName)
@@ -59,6 +56,11 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
         public static SearchRequest<ImDbBasicTitle> BuildSearchRequest(MovieSearchViewModel vm)
         {
+
+            //1. Container for multiple query filters
+            var mustClauses = new List<QueryContainer>();
+
+            //scrub the data
             var criteria = vm.SearchCriteria;
             if (criteria == null)
             {
@@ -71,10 +73,10 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
             //limit search fields
             var fields = new List<Nest.Field>();
-            if (vm.OnlyOriginalTitle)
-            {
-                fields.Add(new Nest.Field("originalTitle"));
-            }
+            //if (vm.OnlyOriginalTitle)
+            //{
+            //    fields.Add(new Nest.Field("originalTitle"));
+            //}
             
             //used for
             var queryStringFilter = new QueryStringQuery()
@@ -84,16 +86,15 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
             };
 
             //ONLY movies
-            var titleTypeFilter = new MatchQuery()
-            {
-                Field = "titleType",
-                Query = "movie"
-            };
+            //var titleTypeFilter = new MatchQuery()
+            //{
+            //    Field = "titleType",
+            //    Query = "movie"
+            //};
 
            
-            //container for multiple must situations
-            var mustClauses = new List<QueryContainer>();
-           
+            
+            //simgle record query
             if (vm.DocumentId  != null && vm.DocumentId.Length > 0)
             {
 
@@ -110,12 +111,13 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
             }
             else
             {
+                //add google style query
                 mustClauses.Add(queryStringFilter);
 
                 //only movies filter
                 if (vm.OnlyMovies)
                 {
-                    mustClauses.Add(titleTypeFilter);
+                    //mustClauses.Add(titleTypeFilter);
                 }
 
 
@@ -133,9 +135,7 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
             });
             
-
-
-
+            
             var request = new SearchRequest<ImDbBasicTitle>()
             {
                 From = 0,
