@@ -28,13 +28,19 @@ namespace IntroductionToElasticSearch.Controllers
         
             return View(vm);
         }
+
+        private string GetDemoIndexName()
+        {
+            return "prarie_devcon_2019_movies";
+        }
+
         [HttpPost]
         public ActionResult Index(MovieSearchViewModel vm)
         {
 
-            var client = ElastaTools.GetElasticClient("prarie_devcon_2019_movies");
+            var client = ElastaTools.GetElasticClient(GetDemoIndexName());
             var searchRequest = ElastaTools.BuildSearchRequest(vm);
-            vm.QueryResults = ElastaTools.SearchMovies(client, "prarie_devcon_2019_movies", searchRequest);
+            vm.QueryResults = ElastaTools.SearchMovies(client, GetDemoIndexName(), searchRequest);
             vm.FoundMovies = vm.QueryResults.Documents.ToList();
             vm.QueryJson = client.RequestResponseSerializer.SerializeToString(searchRequest);
             
@@ -47,8 +53,8 @@ namespace IntroductionToElasticSearch.Controllers
             //   ElastaTools.LoadDirectorsTest();
 
             var movies = ElastaTools.GetImdbMovieListings();
-            ElastaTools.LoadCollectionInfoIndex(movies, ElastaTools.GetElasticClient("prarie_devcon_2019_movies"),
-                "prarie_devcon_2019_movies");
+            ElastaTools.LoadCollectionInfoIndex(movies, ElastaTools.GetElasticClient(GetDemoIndexName()),
+                GetDemoIndexName());
 
             return Content("Data has been loaded");
         }

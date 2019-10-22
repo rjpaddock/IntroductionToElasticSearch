@@ -31,7 +31,11 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
         public static void LoadCollectionInfoIndex<T>(List<T> dataToProcess, ElasticClient client, string indexName) where T : class
         {
-            
+            //clear the index before load
+            var deleteResult = client.DeleteByQuery<T>(del => del
+                .Query(q => q.QueryString(qs => qs.Query("*"))).Index(indexName));
+
+
             var waitHandle = new CountdownEvent(1);
             var bulkAll = client.BulkAll(dataToProcess, b => b
                 .Index(indexName)
@@ -73,11 +77,11 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
             //limit search fields
             var fields = new List<Nest.Field>();
-            //if (vm.OnlyOriginalTitle)
-            //{
-            //    fields.Add(new Nest.Field("originalTitle"));
-            //}
-            
+            if (vm.OnlyOriginalTitle)
+            {
+                fields.Add(new Nest.Field("originalTitle"));
+            }
+
             //used for
             var queryStringFilter = new QueryStringQuery()
             {
@@ -86,15 +90,15 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
             };
 
             //ONLY movies
-            //var titleTypeFilter = new MatchQuery()
-            //{
-            //    Field = "titleType",
-            //    Query = "movie"
-            //};
+            var titleTypeFilter = new MatchQuery()
+            {
+                Field = "titleType",
+                Query = "movie"
+            };
 
-           
-            
-            //simgle record query
+
+
+            //single record query
             if (vm.DocumentId  != null && vm.DocumentId.Length > 0)
             {
 
@@ -117,7 +121,7 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
                 //only movies filter
                 if (vm.OnlyMovies)
                 {
-                    //mustClauses.Add(titleTypeFilter);
+                    mustClauses.Add(titleTypeFilter);
                 }
 
 
@@ -126,12 +130,11 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
             //sort fields
             var sortFields = new List<ISort>();
-            sortFields.Add(new SortField()
+            sortFields.Add(new FieldSort()
             {
                 Field = "sortYear",
                 Order = SortOrder.Ascending,
                 UnmappedType = FieldType.Integer,
-                Missing = "_last",
 
             });
             
@@ -165,10 +168,11 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
             csv.Configuration.MissingFieldFound = null;
             var retval = new List<ImDbBasicTitle>();
             csv.Read();
+            var maxKount = 2000000;
             var kount = 0;
             while (csv.Read())
             {
-
+                ++kount;
                 var newRec = new ImDbBasicTitle()
                 {
                     Id = csv.GetField(0).CleanImdbData(),
@@ -182,7 +186,13 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
                     Genres = csv.GetField(8).CleanImdbData().Split(','),
 
                 };
-                if (newRec.IsAdult == "0" && newRec.StartYear.Length > 0)
+
+                if (newRec.Id == "tt0350945")
+                {
+                    var x = 1;
+                }
+
+                if (newRec.IsAdult == "0" && csv.GetField(2).CleanImdbData().ToLower().IndexOf("porn") < 0 && csv.GetField(8).ToLower().IndexOf("adult") < 0  && newRec.StartYear.Length > 0)
                 {
                     retval.Add(newRec);
 
@@ -194,7 +204,7 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
                     Console.WriteLine(kount.ToString());
                 }
 
-                if (kount == 100000000)
+                if (retval.Count >= maxKount)
                 {
                     break;
                 }
@@ -209,7 +219,7 @@ namespace IntroductionToElasticSearch.BusinessLogic.Services
 
         public static void LoadDirectorsTest()
         {
-            var client = ElastaTools.GetElasticClient("prarie_devcon_2019");
+            var client = ElastaTools.GetElasticClient("prarie_devcon_2019_directors");
 
             var clients = new List<Director>();
             clients.Add(new Director()
